@@ -262,7 +262,15 @@ export async function handleErrorResponse(
 		enriched = raw;
 	}
 
-    console.error(`[${PLUGIN_NAME}] ${response.status} error:`, enriched);
+	// Log concise error message (full details available via logRequest for debugging)
+	let friendlyMsg = `HTTP ${response.status}`;
+	try {
+		const parsedError = JSON.parse(enriched);
+		friendlyMsg = parsedError?.error?.friendly_message || parsedError?.error?.message || friendlyMsg;
+	} catch {
+		// enriched is not JSON, use default message
+	}
+	console.error(`[${PLUGIN_NAME}] ${response.status} error: ${friendlyMsg}`);
 	logRequest(LOG_STAGES.ERROR_RESPONSE, {
 		status: response.status,
 		error: enriched,
