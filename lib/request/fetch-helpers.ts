@@ -207,10 +207,12 @@ export function createCodexHeaders(
 /**
  * Handles error responses from the Codex API
  * @param response - Error response from API
+ * @param client - Optional opencode client for showing toast notifications
  * @returns Response with error details
  */
 export async function handleErrorResponse(
     response: Response,
+    client?: OpencodeClient,
 ): Promise<Response> {
 	const raw = await response.text();
 
@@ -262,7 +264,7 @@ export async function handleErrorResponse(
 		enriched = raw;
 	}
 
-	// Log concise error message (full details available via logRequest for debugging)
+	// Extract friendly message for toast notification
 	let friendlyMsg = `HTTP ${response.status}`;
 	try {
 		const parsedError = JSON.parse(enriched);
@@ -270,7 +272,22 @@ export async function handleErrorResponse(
 	} catch {
 		// enriched is not JSON, use default message
 	}
-	console.error(`[${PLUGIN_NAME}] ${response.status} error: ${friendlyMsg}`);
+
+	// Show toast notification if client is available (preferred over console.error)
+	if (client) {
+		try {
+			await client.tui.showToast({
+				body: {
+					message: friendlyMsg,
+					variant: response.status === 429 ? "warning" : "error",
+				},
+			});
+		} catch {
+			// TUI may not be available, fall back to debug log
+		}
+	}
+
+	// Log full details for debugging (not shown to user)
 	logRequest(LOG_STAGES.ERROR_RESPONSE, {
 		status: response.status,
 		error: enriched,

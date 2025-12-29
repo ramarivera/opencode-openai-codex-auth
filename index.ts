@@ -204,7 +204,7 @@ export const OpenAIAuthPlugin: Plugin = async ({ client }: PluginInput) => {
 
 						// Step 7: Handle error or success response
 						if (!response.ok) {
-							return await handleErrorResponse(response);
+							return await handleErrorResponse(response, client);
 						}
 
 						return await handleSuccessResponse(response, isStreaming);
